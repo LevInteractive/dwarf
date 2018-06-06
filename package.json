@@ -1,17 +1,15 @@
 {
-  "name": "worktaps-shortener-server",
+  "name": "dwarf",
   "version": "1.0.0",
-  "description": "",
+  "description":
+    "A URL shortener application optimized for performance with basic security.",
   "main": "index.js",
   "scripts": {
-    "start": "NODE_ENV=development node_modules/.bin/nodemon app.js",
-    "test":
-      "NODE_ENV=test mocha --harmony --es_staging -G -u bdd -c --recursive ./**/*_test.js ./**/**/*_test.js",
-    "jsdoc": "node_modules/.bin/jsdoc -c .jsdoc"
+    "start": "NODE_ENV=development node_modules/.bin/nodemon app.js"
   },
   "repository": {
     "type": "git",
-    "url": "git@dev.lev-interactive.com:worktaps/worktaps-core.git"
+    "url": "git@github.com:LevInteractive/dwarf.git"
   },
   "author": "Lev Interactive",
   "license": "ISC",
@@ -24,8 +22,6 @@
     "winston": "^2.4.2"
   },
   "devDependencies": {
-    "mocha": "3.0.2",
-    "nodemon": "1.11.0",
-    "should": "11.2.1"
+    "nodemon": "1.11.0"
   }
 }
