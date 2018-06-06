@@ -30,12 +30,10 @@ app.post("/create", async (req, res) => {
         .json({ error: true, message: "You need to send a valid apiKey" });
     }
     if (!req.body.longUrl) {
-      return res
-        .status(404)
-        .json({
-          error: true,
-          message: "You need to send a longUrl to be shorten"
-        });
+      return res.status(404).json({
+        error: true,
+        message: "You need to send a longUrl to be shorten"
+      });
     }
     const longUrl = req.body.longUrl;
     const result = await UrlShort.shorten(longUrl, req.body.code);
@@ -58,11 +56,19 @@ app.get("/:code", async (req, res) => {
   }
 });
 
-app.set("port", config.appPort);
+app.get("/", (req, res) => {
+  return res.send(
+    `${
+      config.baseUrl
+    } <a href="https://github.com/LevInteractive/dwarf">DWARF shortener</a>`
+  );
+});
+
+app.set("port", config.port);
 
 (async function main() {
   await connect();
-  log(`DWARF Url Shortener running on port ${config.baseUrl}`);
+  log(`DWARF Url Shortener running on host ${config.baseUrl}`);
   const server = http.createServer(app);
   server.listen(config.port);
 })();

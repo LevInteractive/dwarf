@@ -40,6 +40,18 @@ And your good to run:
 node app.js
 ```
 
+### No `.env` file
+
+You can start directly using env vars:
+
+```bash
+MONGO_CONNECTION_STRING=mongodb://127.0.0.1:27017  MONGO_DATABASE=dwarf \
+  PORT=3001 BASE_URL=http://localhost:3001 API_KEY=RANDOM_LARGE_HASH \
+  node app.js
+```
+
+But remember that `.env` file has precendence and will be used instead if available.
+
 ## Consuming
 
 ### Shortening a single url
