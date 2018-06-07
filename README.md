@@ -32,7 +32,17 @@ PORT=3001
 BASE_URL=http://localhost:3001
 # Api key to access
 API_KEY=RANDOM_LARGE_HASH
+# Allowed hosts
+# * => Allow all hosts
+# http://example.com => allows example.com domain (exactly, http and https are different)
+# /\.example\.com/ => allows any subdmain at example.com (REGEX)
+# 200.200.100.100 => allows a host defined by IP (for server side requests)
+# http://example.com,/.example\.com/,200.200.100.100 => any of above, comma separated list
+WHITELIST=*
 ```
+
+**IMPORTANT CORS WARNING**: You need to check carefully your WHITELIST configuration
+to avoid CORS errors on your application.
 
 And your good to run:
 
@@ -40,17 +50,22 @@ And your good to run:
 node app.js
 ```
 
-### No `.env` file
+### Overriding `.env` file or no `.env` file at all
 
-You can start directly using env vars:
+You can start directly using env vars (no `.env` file):
 
 ```bash
 MONGO_CONNECTION_STRING=mongodb://127.0.0.1:27017  MONGO_DATABASE=dwarf \
   PORT=3001 BASE_URL=http://localhost:3001 API_KEY=RANDOM_LARGE_HASH \
+  WHITELIST="*"
   node app.js
 ```
 
-But remember that `.env` file has precendence and will be used instead if available.
+or just override one or more settings - the rest will use `.env` file settings:
+
+```bash
+  BASE_URL=myshrt.ul WHITELIST="example.com,/\.localhost:3555/" node app.js
+```
 
 ## Consuming
 
@@ -165,3 +180,102 @@ Returns (see that errors are returned on each url block so you can parse):
 ```
 
 So far, using `code` to batch create custom urls are not available.
+
+## Example frontend module
+
+The following code uses [request-promise](https://www.npmjs.com/package/request-promise)
+module for async requests, so you need to install on your code:
+
+```
+npm install request-promise
+```
+
+Considering the module:
+
+```javascript
+/**
+ * dwarf-shortener wrapper
+ * @file dwarf-shortener.js
+ */
+
+import rp from "request-promise";
+
+exports.shorten = async function(apiUrl, apiKey, longUrl, code) {
+  const options = {
+    method: "POST",
+    uri: `${apiUrl}/create`,
+    json: { longUrl, code, apiKey },
+    headers: {
+      Origin: window.location.origin
+    }
+  };
+
+  return rp(options)
+    .then(function(data) {
+      return data.shortUrl;
+    })
+    .catch(function(err) {
+      console.error("[DWARF SHORTENER ERROR]", err.message);
+      return longUrl;
+    });
+};
+
+exports.batchShorten = async function(apiUrl, apiKey, longUrls) {
+  if (process.env.NODE_ENV === "test") {
+    return await Promise.all(
+      longUrls.map(async longUrl => {
+        return { longUrl, shortUrl: longUrl };
+      })
+    );
+  }
+
+  const options = {
+    method: "POST",
+    uri: `${apiUrl}/create`,
+    json: { longUrl: longUrls, apiKey },
+    headers: {
+      Origin: window.location.origin
+    }
+  };
+
+  return rp(options)
+    .then(function(data) {
+      return data;
+    })
+    .catch(async function(err) {
+      error("[DWARF SHORTENER BATCH ERROR]", err);
+      return await Promise.all(
+        longUrls.map(async longUrl => {
+          return { longUrl, err: err.message };
+        })
+      );
+    });
+};
+```
+
+You can consume using:
+
+```javascript
+import { shorten, batchShorten } from "PATH_TO/dwarf-shortner";
+const shortUrl = shorten(
+  "http://myshrt.url",
+  "MY_API_KEY",
+  "http://longurl.example.com"
+);
+console.log(shortUrl);]
+// # sample output
+// http://myshrt.url/3Yc
+
+const urls = batchShorten("http://myshrt.url", "MY_API_KEY", [
+  "http://longurl1.example.com",
+  "http://longurl2.example.com",
+  "http://longurl3.example.com",
+]);
+console.log(urls);
+// # sample output
+// [
+//   { "longUrl": "http://longurl1.example.com", "shortUrl": "http://myshrt.url/3Yc"},
+//   { "longUrl": "http://longurl2.example.com", "shortUrl": "http://myshrt.url/3Yd"},
+//   { "longUrl": "http://longurl3.example.com", "shortUrl": "http://myshrt.url/3Ye"}
+// ]
+```

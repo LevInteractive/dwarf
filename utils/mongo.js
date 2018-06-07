@@ -120,6 +120,7 @@ async function getCounter() {
 exports.UrlShort = {
   shorten: async function(longUrl, code) {
     const model = modelQuery("UrlShort");
+    let count;
 
     if (Array.isArray(longUrl)) {
       return await Promise.all(
@@ -157,7 +158,7 @@ exports.UrlShort = {
             };
           }
           // Doesn't exist, let's create
-          const count = await getCounter();
+          count = await getCounter();
           const code = encode(count);
           const fields = {
             _id: count,
@@ -182,9 +183,9 @@ exports.UrlShort = {
       );
     }
 
-    // Check if code already exists, so just the shortUrl
+    // Check if code is sent, no need to generate
     if (code) {
-      // Check if code already exists, so just the shortUrl
+      // Check if code already exists, so just return shortUrl
       const existingUrl = await model.findOne({ code });
       if (existingUrl) {
         log(
@@ -194,8 +195,9 @@ exports.UrlShort = {
         );
         return { longUrl, shortUrl: `${config.baseUrl}/${existingUrl.code}` };
       }
+      count = await getCounter();
     } else {
-      // Check if longUrl already exists, so just the shortUrl
+      // Check if longUrl already exists, so just return shortUrl
       const existingUrl = await model.findOne({ longUrl });
       if (existingUrl) {
         log(
@@ -206,8 +208,8 @@ exports.UrlShort = {
         return { longUrl, shortUrl: `${config.baseUrl}/${existingUrl.code}` };
       }
       // Nope, just generate a incremented one
-      const count = await getCounter();
-      const code = encode(count);
+      count = await getCounter();
+      code = encode(count);
     }
 
     const fields = {

@@ -26,29 +26,27 @@ app.use(async (err, req, res, next) => {
 
 // Cors configuration
 const whitelist = ["http://localhost:3000", "http://(.*).localhost:3000"];
-const corsOptions = {
-  origin: function(origin, callback) {
-    callback(null, true);
-    return;
-    if (whitelist.indexOf(origin) !== -1) {
-      callback(null, true);
-      return;
+const corsOptions = { origin: true };
+if (config.whitelist && config.whitelist !== "*") {
+  const whitelist = config.whitelist.split(",");
+  whitelist.forEach(function(val, idx) {
+    if (whitelist[idx].match(/^\/(.*)\/$/)) {
+      whitelist[idx] = new RegExp(
+        whitelist[idx]
+          .substr(1, whitelist[idx].length - 2)
+          .replace("\\\\", "\\")
+      );
     }
-    console.log("WHITELIST", whitelist);
-    for (i = 0; i < whitelist.lenght; i = i + 1) {
-      console.log("origin", origin);
-      if (origin.match(whitelist[i])) {
-        callback(null, true);
-        return;
-      }
-    }
-    callback(new Error("Not allowed by CORS"));
-  }
-};
+  });
+  corsOptions.origin = whitelist;
+}
+log("Whitelisted hosts:", corsOptions.origin.join(" - "));
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.post("/create", async (req, res) => {
   try {
+    log(`[REQUEST FROM] ${req.hostname}`);
     if (
       !req.body.apiKey ||
       (req.body.apiKey && req.body.apiKey !== config.apiKey)

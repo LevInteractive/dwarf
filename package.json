@@ -11,7 +11,7 @@
     "url": "git@github.com:LevInteractive/dwarf.git"
   },
   "author": "Lev Interactive",
-  "license": "ISC",
+  "license": "Apache",
   "dependencies": {
     "body-parser": "^1.18.3",
     "cors": "^2.8.4",
