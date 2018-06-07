@@ -91,6 +91,32 @@ function modelQuery(singularName) {
 }
 exports.modelQuery = modelQuery;
 
+exports.startCounter = function() {
+  const model = modelQuery("UrlCounter");
+  model.count(function(err, num) {
+    if (num === 0) {
+      model.insertOne({ _id: "counter", counter: 10000 }, function(err, doc) {
+        if (doc) {
+          log("Counter started");
+        }
+      });
+    } else {
+      log("Counter already started");
+    }
+  });
+};
+
+async function getCounter() {
+  const model = modelQuery("UrlCounter");
+  const counter = await model.findAndModify(
+    { _id: "counter" },
+    [],
+    { $inc: { counter: 1 } },
+    { new: true }
+  );
+  return counter.value.counter;
+}
+
 exports.UrlShort = {
   shorten: async function(longUrl, code) {
     const model = modelQuery("UrlShort");
@@ -131,9 +157,14 @@ exports.UrlShort = {
             };
           }
           // Doesn't exist, let's create
-          const count = (await model.count()) + 10000;
+          const count = await getCounter();
           const code = encode(count);
-          const fields = { longUrl: lUrl, code, created: new Date() };
+          const fields = {
+            _id: count,
+            longUrl: lUrl,
+            code,
+            created: new Date()
+          };
           await model.insertOne(fields);
           log(`[CREATED] ${lUrl} => ${config.baseUrl}/${code}`);
           return { longUrl: lUrl, shortUrl: `${config.baseUrl}/${code}` };
@@ -175,11 +206,16 @@ exports.UrlShort = {
         return { longUrl, shortUrl: `${config.baseUrl}/${existingUrl.code}` };
       }
       // Nope, just generate a incremented one
-      const count = (await model.count()) + 10000;
-      code = encode(count);
+      const count = await getCounter();
+      const code = encode(count);
     }
 
-    const fields = { longUrl, code, created: new Date() };
+    const fields = {
+      _id: count,
+      longUrl,
+      code,
+      created: new Date()
+    };
     await model.insertOne(fields);
     log(`[CREATED] ${longUrl} => ${config.baseUrl}/${code}`);
 

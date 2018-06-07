@@ -1,23 +1,51 @@
 const http = require("http");
 const bodyParser = require("body-parser");
 const express = require("express");
-const { connect, UrlShort } = require("./utils/mongo");
+const { connect, startCounter, UrlShort } = require("./utils/mongo");
 const config = require("./utils/config");
 const { log, error } = require("./utils/logging");
 const app = express();
+const cors = require("cors");
 
 // Because it's running behind nginx in prod.
 // https://github.com/expressjs/morgan/issues/114
 app.enable("trust proxy");
 app.set("trust proxy", () => true);
+
+// Setup bodyParser with catch JSON errors
 app.use(bodyParser.json());
-// Catch JSON errors
 app.use(async (err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400) {
     error("Bad JSON", req.body);
     return res.status(404).json({ error: true, message: "Bad JSON" });
   }
+  if (err) {
+    return res.status(404).json({ error: true, message: err.message });
+  }
 });
+
+// Cors configuration
+const whitelist = ["http://localhost:3000", "http://(.*).localhost:3000"];
+const corsOptions = {
+  origin: function(origin, callback) {
+    callback(null, true);
+    return;
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+      return;
+    }
+    console.log("WHITELIST", whitelist);
+    for (i = 0; i < whitelist.lenght; i = i + 1) {
+      console.log("origin", origin);
+      if (origin.match(whitelist[i])) {
+        callback(null, true);
+        return;
+      }
+    }
+    callback(new Error("Not allowed by CORS"));
+  }
+};
+app.use(cors(corsOptions));
 
 app.post("/create", async (req, res) => {
   try {
@@ -68,6 +96,7 @@ app.set("port", config.port);
 
 (async function main() {
   await connect();
+  startCounter();
   log(`DWARF Url Shortener running on host ${config.baseUrl}`);
   const server = http.createServer(app);
   server.listen(config.port);
