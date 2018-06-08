@@ -32,5 +32,4 @@ Object.keys(params).forEach(function(idx) {
   }
 });
 
-console.log(Config);
 module.exports = Config;

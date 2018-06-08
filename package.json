@@ -1,7 +1,8 @@
 {
   "name": "dwarf",
   "version": "1.0.0",
-  "description": "A URL shortener application optimized for performance with basic security.",
+  "description":
+    "A URL shortener application optimized for performance with basic security.",
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=development node_modules/.bin/nodemon app.js"
@@ -10,7 +11,18 @@
     "type": "git",
     "url": "git@github.com:LevInteractive/dwarf.git"
   },
-  "author": "Lev Interactive",
+  "author": {
+    "name": "Rafael Goulart",
+    "email": "rafaelgou@pm.me",
+    "url": "https://tech.rgou.net"
+  },
+  "contributors": [
+    {
+      "name": "Pete Saia",
+      "email": "pete@lev-interactive.com"
+    }
+  ],
+  "homepage": "https://github.com/LevInteractive/dwarf-client-javascript",
   "license": "Apache",
   "dependencies": {
     "body-parser": "^1.18.3",

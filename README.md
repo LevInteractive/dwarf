@@ -183,11 +183,11 @@ So far, using `code` to batch create custom urls are not available.
 
 ## Example frontend module
 
-The following code uses [request-promise](https://www.npmjs.com/package/request-promise)
+The following code uses [request-promise-native](https://www.npmjs.com/package/request-promise-native)
 module for async requests, so you need to install on your code:
 
 ```
-npm install request-promise
+npm install request-promise-native
 ```
 
 Considering the module:
@@ -198,9 +198,9 @@ Considering the module:
  * @file dwarf-shortener.js
  */
 
-import rp from "request-promise";
+import rp from "request-promise-native";
 
-exports.shorten = async function(apiUrl, apiKey, longUrl, code) {
+export const shorten = async function shorten(apiUrl, apiKey, longUrl, code) {
   const options = {
     method: "POST",
     uri: `${apiUrl}/create`,
@@ -220,7 +220,11 @@ exports.shorten = async function(apiUrl, apiKey, longUrl, code) {
     });
 };
 
-exports.batchShorten = async function(apiUrl, apiKey, longUrls) {
+export const batchShorten = async function batchShorten(
+  apiUrl,
+  apiKey,
+  longUrls
+) {
   if (process.env.NODE_ENV === "test") {
     return await Promise.all(
       longUrls.map(async longUrl => {
@@ -256,26 +260,89 @@ exports.batchShorten = async function(apiUrl, apiKey, longUrls) {
 You can consume using:
 
 ```javascript
-import { shorten, batchShorten } from "PATH_TO/dwarf-shortner";
-const shortUrl = shorten(
-  "http://myshrt.url",
-  "MY_API_KEY",
-  "http://longurl.example.com"
-);
-console.log(shortUrl);]
-// # sample output
-// http://myshrt.url/3Yc
+import { shorten, batchShorten } from "/PATH_TO/dwarf-shortener";
 
-const urls = batchShorten("http://myshrt.url", "MY_API_KEY", [
-  "http://longurl1.example.com",
-  "http://longurl2.example.com",
-  "http://longurl3.example.com",
-]);
-console.log(urls);
-// # sample output
-// [
-//   { "longUrl": "http://longurl1.example.com", "shortUrl": "http://myshrt.url/3Yc"},
-//   { "longUrl": "http://longurl2.example.com", "shortUrl": "http://myshrt.url/3Yd"},
-//   { "longUrl": "http://longurl3.example.com", "shortUrl": "http://myshrt.url/3Ye"}
-// ]
+(async function main() {
+  /**
+   * Single request
+   */
+  let shortUrl = await shorten(
+    "http://localhost:3001",
+    "9c10936a9c23a7e48397f43dbf5d8159",
+    "http://longurl.example.com"
+  );
+  console.log("SINGLE", shortUrl);
+  // Output:
+  // SINGLE http://localhost:3001/43e
+
+  /**
+   * Single request with fixed code
+   */
+  shortUrl = await shorten(
+    "http://localhost:3001",
+    "9c10936a9c23a7e48397f43dbf5d8159",
+    "http://longurl-fixed.example.com",
+    "fixed"
+  );
+  console.log("SINGLE FIXED", shortUrl);
+  // Output:
+  // SINGLE FIXED http://localhost:3001/fixed
+  //   shortUrl: 'http://localhost:3001/43e' }
+
+  /**
+   * Single request with expanded return
+   */
+  shortUrl = await shorten(
+    "http://localhost:3001",
+    "9c10936a9c23a7e48397f43dbf5d8159",
+    "http://longurl.example.com",
+    null,
+    true
+  );
+  console.log("SINGLE EXPANDED", shortUrl);
+  // Output:
+  // SINGLE EXPANDED { longUrl: 'http://longurl.example.com',
+
+  /**
+   * Batch request
+   */
+  let urls = await batchShorten(
+    "http://localhost:3001",
+    "9c10936a9c23a7e48397f43dbf5d8159",
+    [
+      "http://longurl1.example.com",
+      "http://longurl2.example.com",
+      "http://longurl3.example.com"
+    ]
+  );
+  console.log("BATCH", urls);
+  // Output:
+  // BATCH [ 'http://localhost:3001/43c',
+  //   'http://localhost:3001/43d',
+  //   'http://localhost:3001/43b' ]
+
+  /**
+   * Batch request with expanded return
+   */
+  urls = await batchShorten(
+    "http://localhost:3001",
+    "9c10936a9c23a7e48397f43dbf5d8159",
+    [
+      "http://longurl1.example.com",
+      "http://longurl2.example.com",
+      "http://longurl3.example.com"
+    ],
+    true
+  );
+  console.log("BATCH EXPANDED", urls);
+  // Output:
+  // BATCH EXPANDED [ { longUrl: 'http://longurl1.example.com',
+  //     shortUrl: 'http://localhost:3001/43c' },
+  //   { longUrl: 'http://longurl2.example.com',
+  //     shortUrl: 'http://localhost:3001/43d' },
+  //   { longUrl: 'http://longurl3.example.com',
+  //     shortUrl: 'http://localhost:3001/43b' } ]
+})();
 ```
+
+This is also available as a package: [dwarf-client-javascript](https://github.com/LevInteractive/dwarf-client-javascript)
