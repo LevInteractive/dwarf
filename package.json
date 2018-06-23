@@ -1,8 +1,7 @@
 {
   "name": "dwarf",
   "version": "1.0.0",
-  "description":
-    "A URL shortener application optimized for performance with basic security.",
+  "description": "A URL shortener application optimized for performance with basic security.",
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=development node_modules/.bin/nodemon app.js"

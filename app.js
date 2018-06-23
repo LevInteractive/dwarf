@@ -40,7 +40,6 @@ if (config.whitelist && config.whitelist !== "*") {
   });
   corsOptions.origin = whitelist;
 }
-log("Whitelisted hosts:", corsOptions.origin.join(" - "));
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
