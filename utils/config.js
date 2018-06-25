@@ -3,7 +3,6 @@ const config = require("dotenv").config();
 const Config = {
   redisHost: "127.0.0.1",
   redisPort: "6379",
-  redisPort: "REDIS_PORT",
   mongoConnectionString: "mongodb://127.0.0.1:27017",
   mongoDatabase: "dwarf",
   port: 3001,
