@@ -76,6 +76,16 @@ exports.connect = function() {
 };
 
 /**
+ * Prime the counter based on number of existing URL's in the database. This
+ * is a temporary hack until we move to 100% redis.
+ */
+exports.init = function() {
+  const model = modelQuery("UrlShort");
+  const currentCount = await model.count();
+  redisClient.set(redisPrefix + "counter", currentCount);
+}
+
+/**
  * Connect to mongo.
  *
  * @type {Object}
@@ -108,7 +118,7 @@ const getRandomInt = function(min, max) {
 
 async function getCounter() {
   return new Promise((resolve, reject) => {
-    db.incr(redisPrefix + "dwarf_counter", (err, count) => {
+    db.incr(redisPrefix + "counter", (err, count) => {
       if (err) {
         reject(err);
       } else {

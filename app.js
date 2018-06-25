@@ -93,6 +93,7 @@ app.set("port", config.port);
 
 (async function main() {
   await connect();
+  await mongo.init();
   log(`DWARF Url Shortener running on host ${config.baseUrl}`);
   const server = http.createServer(app);
   server.listen(config.port);
