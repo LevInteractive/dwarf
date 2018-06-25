@@ -13,6 +13,14 @@ const { MongoClient } = require("mongodb");
 const { plural } = require("pluralize");
 const config = require("./config");
 const { log, error } = require("./logging");
+const redis = require("redis");
+
+const redisPrefix = "dwarf:";
+
+const redisClient = redis.createClient({
+  host: config.redisHost,
+  port: config.redisPort
+});
 
 /**
  * Regex to check MongoID
@@ -44,23 +52,26 @@ exports.connect = function() {
       connectTimeoutMS: 30000
     };
 
-    MongoClient.connect(config.mongoConnectionString, function(err, conn) {
-      if (err) {
-        reject(err);
-        return error(
-          `Failed to connect to MongoDB: ${config.mongoConnectionString}/${
+    MongoClient.connect(
+      config.mongoConnectionString,
+      function(err, conn) {
+        if (err) {
+          reject(err);
+          return error(
+            `Failed to connect to MongoDB: ${config.mongoConnectionString}/${
+              config.mongoDatabase
+            }`
+          );
+        }
+        _db = conn.db(config.mongoDatabase);
+        log(
+          `Successfully connected to MongoDB: ${config.mongoConnectionString}/${
             config.mongoDatabase
           }`
         );
+        resolve(_db);
       }
-      _db = conn.db(config.mongoDatabase);
-      log(
-        `Successfully connected to MongoDB: ${config.mongoConnectionString}/${
-          config.mongoDatabase
-        }`
-      );
-      resolve(_db);
-    });
+    );
   });
 };
 
@@ -91,6 +102,10 @@ function modelQuery(singularName) {
 }
 exports.modelQuery = modelQuery;
 
+const getRandomInt = function(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+};
+
 exports.startCounter = function() {
   const model = modelQuery("UrlCounter");
   model.count(function(err, num) {
@@ -107,15 +122,16 @@ exports.startCounter = function() {
 };
 
 async function getCounter() {
-  const model = modelQuery("UrlCounter");
-  const counter = await model.findAndModify(
-    { _id: "counter" },
-    [],
-    { $inc: { counter: 1 } },
-    { new: true }
-  );
-  return counter.value.counter;
-}
+  return new Promise((resolve, reject) => {
+    db.incr(redisPrefix + "dwarf_counter", (err, count) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(getRandomInt(9999, 999999) + count.toString());
+      }
+    });
+  });
+});
 
 exports.UrlShort = {
   shorten: async function(longUrl, code) {
@@ -123,54 +139,58 @@ exports.UrlShort = {
     let count;
 
     if (Array.isArray(longUrl)) {
-      return await Promise.all(
-        longUrl.map(async lUrl => {
-          if (typeof lUrl !== "string") {
-            error(`[ERROR: LONG_URL is not a string] ${lUrl}`);
-            return {
-              longUrl: lUrl,
-              error: true,
-              message: "longUrl is not a string"
-            };
-          }
+      const urls = [];
 
-          if (!isValidUrl(lUrl)) {
-            error(`[ERROR: LONG_URL is an invalid URL] ${lUrl}`);
-            return {
-              longUrl: lUrl,
-              error: true,
-              message:
-                "Invalid URL format. Input URL must comply to the following: http(s)://(www.)domain.ext(/)(path)"
-            };
-          }
-
-          // Check if longUrl already exists, so just the shortUrl
-          const existingUrl = await model.findOne({ longUrl: lUrl });
-          if (existingUrl) {
-            log(
-              `[ABORTING: LONG_URL already exists] ${lUrl} => ${
-                config.baseUrl
-              }/${existingUrl.code}`
-            );
-            return {
-              longUrl: lUrl,
-              shortUrl: `${config.baseUrl}/${existingUrl.code}`
-            };
-          }
-          // Doesn't exist, let's create
-          count = await getCounter();
-          const code = encode(count);
-          const fields = {
-            _id: count,
+      for (let i = 0, len = longUrl.length; i < len; i++) {
+        const lUrl = longUrl[i];
+        if (typeof lUrl !== "string") {
+          error(`[ERROR: LONG_URL is not a string] ${lUrl}`);
+          return {
             longUrl: lUrl,
-            code,
-            created: new Date()
+            error: true,
+            message: "longUrl is not a string"
           };
-          await model.insertOne(fields);
-          log(`[CREATED] ${lUrl} => ${config.baseUrl}/${code}`);
-          return { longUrl: lUrl, shortUrl: `${config.baseUrl}/${code}` };
-        })
-      );
+        }
+
+        if (!isValidUrl(lUrl)) {
+          error(`[ERROR: LONG_URL is an invalid URL] ${lUrl}`);
+          return {
+            longUrl: lUrl,
+            error: true,
+            message:
+              "Invalid URL format. Input URL must comply to the following: http(s)://(www.)domain.ext(/)(path)"
+          };
+        }
+
+        // Check if longUrl already exists, so just the shortUrl
+        const existingUrl = await model.findOne({ longUrl: lUrl });
+        if (existingUrl) {
+          log(
+            `[ABORTING: LONG_URL already exists] ${lUrl} => ${config.baseUrl}/${
+              existingUrl.code
+            }`
+          );
+
+          urls.push({
+            longUrl: lUrl,
+            shortUrl: `${config.baseUrl}/${existingUrl.code}`
+          });
+        }
+        // Doesn't exist, let's create
+        count = await getCounter();
+        const code = encode(count);
+        const fields = {
+          _id: count,
+          longUrl: lUrl,
+          code,
+          created: new Date()
+        };
+        await model.insertOne(fields);
+        log(`[CREATED] ${lUrl} => ${config.baseUrl}/${code}`);
+        urls.push({ longUrl: lUrl, shortUrl: `${config.baseUrl}/${code}` });
+      }
+
+      return urls;
     }
 
     if (typeof longUrl !== "string") {
@@ -205,6 +225,7 @@ exports.UrlShort = {
             config.baseUrl
           }/${existingUrl.code}`
         );
+
         return { longUrl, shortUrl: `${config.baseUrl}/${existingUrl.code}` };
       }
       // Nope, just generate a incremented one
