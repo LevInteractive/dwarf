@@ -106,21 +106,6 @@ const getRandomInt = function(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 };
 
-exports.startCounter = function() {
-  const model = modelQuery("UrlCounter");
-  model.count(function(err, num) {
-    if (num === 0) {
-      model.insertOne({ _id: "counter", counter: 10000 }, function(err, doc) {
-        if (doc) {
-          log("Counter started");
-        }
-      });
-    } else {
-      log("Counter already started");
-    }
-  });
-};
-
 async function getCounter() {
   return new Promise((resolve, reject) => {
     db.incr(redisPrefix + "dwarf_counter", (err, count) => {

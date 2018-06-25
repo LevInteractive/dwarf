@@ -1,7 +1,7 @@
 const http = require("http");
 const bodyParser = require("body-parser");
 const express = require("express");
-const { connect, startCounter, UrlShort } = require("./utils/mongo");
+const { connect, UrlShort } = require("./utils/mongo");
 const config = require("./utils/config");
 const { log, error } = require("./utils/logging");
 const app = express();
@@ -93,7 +93,6 @@ app.set("port", config.port);
 
 (async function main() {
   await connect();
-  startCounter();
   log(`DWARF Url Shortener running on host ${config.baseUrl}`);
   const server = http.createServer(app);
   server.listen(config.port);
