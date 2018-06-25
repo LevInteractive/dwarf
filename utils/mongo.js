@@ -170,7 +170,10 @@ exports.UrlShort = {
             longUrl: lUrl,
             shortUrl: `${config.baseUrl}/${existingUrl.code}`
           });
+
+          continue;
         }
+
         // Doesn't exist, let's create
         count = await getCounter();
         const code = encode(count);
