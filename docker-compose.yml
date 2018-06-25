@@ -1,0 +1,23 @@
+# A docker-compose file for easy local development.
+# Just: docker-compose up
+version: "3.6"
+services:
+  mongo:
+    image: mongo:3.6
+
+  redis:
+    image: redis:4-alpine
+
+  core:
+    depends_on:
+      - redis
+      - mongo
+    build: .
+    ports:
+      - 3001:3001
+    environment:
+      REDIS_HOST: redis
+      MONGO_CONNECTION_STRING: mongodb://mongo:27017
+      API_KEY: "123"
+
+

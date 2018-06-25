@@ -79,11 +79,11 @@ exports.connect = function() {
  * Prime the counter based on number of existing URL's in the database. This
  * is a temporary hack until we move to 100% redis.
  */
-exports.init = function() {
+exports.init = async function() {
   const model = modelQuery("UrlShort");
   const currentCount = await model.count();
   redisClient.set(redisPrefix + "counter", currentCount);
-}
+};
 
 /**
  * Connect to mongo.
@@ -126,7 +126,7 @@ async function getCounter() {
       }
     });
   });
-});
+}
 
 exports.UrlShort = {
   shorten: async function(longUrl, code) {
