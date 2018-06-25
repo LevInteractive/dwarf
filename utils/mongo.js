@@ -118,7 +118,7 @@ const getRandomInt = function(min, max) {
 
 async function getCounter() {
   return new Promise((resolve, reject) => {
-    db.incr(redisPrefix + "counter", (err, count) => {
+    redisClient.incr(redisPrefix + "counter", (err, count) => {
       if (err) {
         reject(err);
       } else {
