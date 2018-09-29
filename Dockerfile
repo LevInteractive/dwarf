@@ -1,12 +1,10 @@
-FROM node:9-alpine
+FROM golang:1.11-alpine
 
-# Create app directory
-WORKDIR /usr/src/app
+ADD . /go/src/github.com/LevInterctive/dwarf/
+WORKDIR /go/src/github.com/LevInterctive/dwarf/
 
-# Bundle app source
-COPY . .
+RUN apk add --no-cache git openssl bzr \
+    && go get -u github.com/golang/dep/cmd/dep
 
-RUN npm install
-
-EXPOSE 8081
-CMD ["node", "app.js"]
+RUN dep ensure && go build -o bin/dwarf
+CMD ["./bin/dwarf"]

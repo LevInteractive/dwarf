@@ -1,33 +1,3 @@
-# GO
-# ------------------------------------------------------------------------------
-# Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-# Test binary, build with `go test -c`
-*.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-
-# NodeJS
-# ------------------------------------------------------------------------------
-logs
-*.log
-npm-debug.log*
-pids
-*.pid
-*.seed
-lib-cov
-coverage
-.grunt
-.lock-wscript
-build/Release
-node_modules
-jspm_packages
-.npm
-.node_repl_history
-.env
+.DS_Store
+vendor/
+dwarf
