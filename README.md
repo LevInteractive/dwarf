@@ -1,17 +1,15 @@
 # Dwarf
 
-Crazy fast URL shortener written in Go using a Redis as a store while exposing
-an interface for others.
+A performant URL shortener written in Go using a Redis as a store while exposing
+an interface for others. Uses rGPC for communication.
 
-Meant to be used as a microservice.
-
-### API
+### How it works
 
 **GET** `/{short-hash}`
 
 This will result in a 301 redirect or a 404 not found.
 
-** via gRPC
+**Creating new shortened URL's via gRPC**
 
 ```json
 {
