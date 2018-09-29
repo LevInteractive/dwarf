@@ -78,6 +78,8 @@ func TestLoad(t *testing.T) {
 	}
 
 	ru, err := store.Load(code)
+	store.Client.FlushDB()
+
 	if err != nil {
 		t.Fatal(err)
 	}
