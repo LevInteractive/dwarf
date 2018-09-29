@@ -1,0 +1,14 @@
+syntax = "proto3";
+package pb;
+
+service Dwarf {
+	rpc Create(CreateRequest) returns (CreateResponse) {}
+}
+
+message CreateRequest {
+	repeated string urls = 1;
+}
+
+message CreateResponse {
+	repeated string urls = 2;
+}

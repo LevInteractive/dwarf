@@ -1,72 +1,59 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 
+	"github.com/LevInteractive/dwarf/pb"
 	"github.com/LevInteractive/dwarf/storage"
 	"github.com/gorilla/mux"
 )
 
-// CreatePayload represents both the incoming and outgoing payload of URL's.
-type CreatePayload struct {
-	Urls []string `json:"urls"`
-}
-
 // LoadResult represents what's returned from the Load method.
 type LoadResult struct {
-	LongURL string `json:"longUrl"`
+	LongURL string `json:"longUrls"`
 }
 
-// CreateHandler for adding a new URL to the store.
-func CreateHandler(store storage.IStorage, baseURL string) func(http.ResponseWriter, *http.Request) {
-	fnc := func(w http.ResponseWriter, r *http.Request) {
-		var outgoing CreatePayload
-		var incoming CreatePayload
+// CreateServer for the gRPC server.
+type CreateServer struct {
+	Store storage.IStorage
+}
 
-		decoder := json.NewDecoder(r.Body)
-		err := decoder.Decode(&incoming)
+// Create new short url given a set of long urls via gRPC.
+func (s *CreateServer) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
+	res := &pb.CreateResponse{}
 
-		if err != nil || len(incoming.Urls) < 1 {
+	// Validate incoming urls. Don't allow any non-legit URL's.
+	for _, u := range req.Urls {
+		_, err := url.ParseRequestURI(u)
+		if err != nil {
 			log.Printf("CreateHandler.error: recieved bad payload: %v", err)
-			http.Error(w, "Malformed payload", http.StatusBadRequest)
-			return
+			return res, err
 		}
-
-		// Validate incoming urls.
-		for _, u := range incoming.Urls {
-			_, err := url.ParseRequestURI(u)
-			if err != nil {
-				log.Printf("CreateHandler.error: recieved bad payload: %v", err)
-				http.Error(w, "Invalid URL passed - no urls shortened.", http.StatusBadRequest)
-				return
-			}
-		}
-
-		// Shorten them.
-		for _, u := range incoming.Urls {
-			code, err := store.Save(u)
-			if err != nil {
-				log.Printf("CreateHandler.error: failed to shorten url: %v", err)
-				http.Error(w, "Unknown error occurred. Please try again.", http.StatusBadRequest)
-				return
-			}
-			outgoing.Urls = append(
-				outgoing.Urls,
-				fmt.Sprintf("%s/%s", baseURL, code),
-			)
-		}
-
-		json.NewEncoder(w).Encode(outgoing)
 	}
-	return fnc
+
+	// Create/get the short code for the URL and build.
+	for _, u := range req.Urls {
+		code, err := s.Store.Save(u)
+		if err != nil {
+			log.Printf("CreateHandler.error: failed to shorten url: %v", err)
+			return res, err
+		}
+
+		res.Urls = append(
+			res.Urls,
+			fmt.Sprintf("%s/%s", BaseURL, code),
+		)
+	}
+
+	return res, nil
 }
 
-// LookupHandler for adding a new URL to the store.
-func LookupHandler(store storage.IStorage, baseURL string) func(http.ResponseWriter, *http.Request) {
+// LookupHandler for adding a new URL to the store via HTTP.
+func LookupHandler(store storage.IStorage) func(http.ResponseWriter, *http.Request) {
 	fnc := func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		code := vars["hash"]
@@ -74,13 +61,13 @@ func LookupHandler(store storage.IStorage, baseURL string) func(http.ResponseWri
 
 		if err == storage.ErrNotFound {
 			log.Printf("LookupHander.warn: could not find url with code %s", code)
-			http.Redirect(w, r, baseURL, 301)
+			http.Redirect(w, r, NotFoundURL, 301)
 			return
 		}
 
 		if err != nil {
 			log.Printf("LookupHandler.error: receieved error while looking up url: %v", err)
-			http.Redirect(w, r, baseURL, 301)
+			http.Redirect(w, r, NotFoundURL, 301)
 			return
 		}
 

@@ -11,9 +11,7 @@ Meant to be used as a microservice.
 
 This will result in a 301 redirect or a 404 not found.
 
-**POST** `/create`
-
-Send a JSON payload with the following shape:
+** via gRPC
 
 ```json
 {
@@ -31,3 +29,20 @@ Your response will return a set of shortened urls in the same order:
 
 
 Better docs coming.
+
+# Development
+
+* [Protobuf/gRPC is required.](https://grpc.io/docs/quickstart/go.html)
+* Go & dep
+
+
+**Redis Store**
+Spin up an instance of redis with:
+
+```bash
+docker run -p "6379:6379" --rm --name dwarf-redis redis:4-alpine
+```
+
+**Testing**
+
+`go test github.com/LevInteractive/dwarf/ -v`

@@ -2,14 +2,31 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
 
+	"github.com/LevInteractive/dwarf/pb"
 	"github.com/LevInteractive/dwarf/storage"
 	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
+	"google.golang.org/grpc"
 )
+
+// BaseURL is the base URL of the application. Short codes are appended on to it
+// to ultimately construct the full short url.
+var BaseURL string
+
+// NotFoundURL is the URL used when Dwarf needs to redirect if a short code
+// doesn't exist. We also redirect to this if the user lands on the root (/) of
+// Dwarf.
+var NotFoundURL string
+
+func init() {
+	BaseURL = GetEnv("APP_BASE_URL", "https://example.com")
+	NotFoundURL = GetEnv("NOTFOUND_REDIRECT_URL", "https://google.com")
+}
 
 // GetEnv grabs env with a fallback
 func GetEnv(key, fallback string) string {
@@ -20,12 +37,6 @@ func GetEnv(key, fallback string) string {
 }
 
 func main() {
-	// Require a base url.
-	base := GetEnv("APP_BASE_URL", "")
-	if base == "" {
-		panic("APP_BASE_URL must be set to a valid url. E.g. https://short.in")
-	}
-
 	// Configure the Redis store. Redis is all we have now so eh.
 	db, err := strconv.Atoi(GetEnv("REDIS_DB", "0"))
 	if err != nil {
@@ -48,16 +59,42 @@ func main() {
 
 	store.Init()
 
-	// App routing.
+	go setupHTTPDiscovery(store)
+	setupGrpcDiscovery(store)
+}
+
+func setupGrpcDiscovery(store storage.IStorage) {
+	lis, err := net.Listen("tcp", GetEnv("GRPC_PORT", ":8001"))
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+
+	s := grpc.NewServer()
+
+	pb.RegisterDwarfServer(s, &CreateServer{
+		Store: store,
+	})
+
+	log.Printf(
+		"Dwarf's gRPC server is listening here -> %s",
+		GetEnv("GRPC_PORT", ":8001"),
+	)
+
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("Failed to serve: %v", err)
+	}
+}
+
+func setupHTTPDiscovery(store storage.IStorage) {
 	appPort := GetEnv("APP_PORT", ":8000")
+
 	r := mux.NewRouter()
-	r.HandleFunc("/create", CreateHandler(store, base)).Methods("POST")
-	r.HandleFunc("/{hash}", LookupHandler(store, base)).Methods("GET")
+	r.HandleFunc("/{hash:.*}", LookupHandler(store)).Methods("GET")
 	http.Handle("/", r)
 	log.Printf(
-		"Dwarf is listening here -> %s and exposed here -> %s",
+		"Dwarf's public HTTP server is listening here -> %s and exposed here -> %s",
 		appPort,
-		GetEnv("APP_BASE_URL", "!!BASE DOMAIN NOT SET!!"),
+		BaseURL,
 	)
 	log.Fatal(http.ListenAndServe(appPort, r))
 }

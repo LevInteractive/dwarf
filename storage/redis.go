@@ -16,12 +16,11 @@ import (
 	"github.com/go-redis/redis"
 )
 
-const prefix = "dwarf:"
+const prefix = "dwarf"
 
 // Redis storage.
 type Redis struct {
 	CharFloor int
-	BaseURL   string
 	Client    *redis.Client
 	Conn      *redis.Options
 }
@@ -39,7 +38,7 @@ func (s *Redis) Init() {
 // Save the url in store with a new code if it isn't already there.
 func (s Redis) Save(u string) (string, error) {
 	codehash := fmt.Sprintf("%s:code:%s", prefix, u)
-	existingCode, err := s.Client.Do("get", codehash).String()
+	existingCode, err := s.Client.Get(codehash).Result()
 	if existingCode != "" {
 		log.Printf("redis.Save.info: didn't need to create new - existed: %s with code %s", u, existingCode)
 		return existingCode, nil

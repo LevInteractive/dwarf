@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/LevInteractive/dwarf/storage"
 	"github.com/go-redis/redis"
 )
 
@@ -18,14 +17,13 @@ func inArray(val string, array []string) bool {
 }
 
 func TestCreation(t *testing.T) {
-	store := storage.Redis{
+	store := Redis{
 		CharFloor: 2,
 		Conn: &redis.Options{
 			Addr:     "localhost:6379",
 			Password: "",
 			DB:       2,
 		},
-		BaseURL: "https://dwarf.short",
 	}
 
 	store.Init()
@@ -58,14 +56,13 @@ func TestCreation(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-	store := storage.Redis{
+	store := Redis{
 		CharFloor: 2,
 		Conn: &redis.Options{
 			Addr:     "localhost:6379",
 			Password: "",
 			DB:       2,
 		},
-		BaseURL: "https://dwarf.short",
 	}
 
 	store.Init()
