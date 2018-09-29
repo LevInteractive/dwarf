@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/LevInteractive/dwarf/storage"
 	"github.com/go-redis/redis"
-	"github.com/psaia/dwarf/storage"
 )
 
 func inArray(val string, array []string) bool {

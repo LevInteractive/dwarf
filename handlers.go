@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/LevInteractive/dwarf/storage"
 	"github.com/gorilla/mux"
-	"github.com/psaia/dwarf/storage"
 )
 
 // CreatePayload represents both the incoming and outgoing payload of URL's.
@@ -74,13 +74,13 @@ func LookupHandler(store storage.IStorage, baseURL string) func(http.ResponseWri
 
 		if err == storage.ErrNotFound {
 			log.Printf("LookupHander.warn: could not find url with code %s", code)
-			http.Error(w, "not found", http.StatusNotFound)
+			http.Redirect(w, r, baseURL, 301)
 			return
 		}
 
 		if err != nil {
 			log.Printf("LookupHandler.error: receieved error while looking up url: %v", err)
-			http.Error(w, "Unknown error while looking up full url", http.StatusBadRequest)
+			http.Redirect(w, r, baseURL, 301)
 			return
 		}
 
