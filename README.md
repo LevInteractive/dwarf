@@ -10,12 +10,12 @@ A high-throughput URL shortener microservice built with Go.
 
 See [start-dev.sh](start-dev.sh) for a complete list of available environmental variables.
 
-### GET `/{short-hash}` -> 301 redirection
+#### GET `/{short-hash}` -> 301 redirection
 
 Dwarf will deliver a 301 redirection to the destination URL or redirect to the fallback
 URL specified with [`NOTFOUND_REDIRECT_URL`](start-dev.sh).
 
-### Creating short links
+#### Creating short links
 
 You must communicate with dwarf via gRPC in order to generate new shortened URLs.
 
@@ -43,7 +43,7 @@ Your response will return a set of shortened urls in the same order:
 { "urls": ["http://sh.ort/Mp", "http://sh.ort/uJ"] }
 ```
 
-### A dwarf gRPC client written with node.js
+#### A dwarf gRPC client written with node.js
 
 To generate short urls, use a gRPC client such as this [node client](https://github.com/LevInteractive/dwarf-client-javascript).
 
