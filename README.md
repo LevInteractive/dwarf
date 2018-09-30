@@ -1,7 +1,7 @@
 # Dwarf
 
 A performant URL shortener written in Go using a Redis as a store while exposing
-an interface for others. Uses rGPC for communication.
+an interface for others. Uses gRPC for communication for high throughput.
 
 ### How it works
 
@@ -11,9 +11,17 @@ This will result in a 301 redirect or a 404 not found.
 
 **Creating new shortened URL's via gRPC**
 
-```json
-{
-  "urls": ["http://my-url.com", "http://my-other-url.io"]
+```proto
+service Dwarf {
+	rpc Create(CreateRequest) returns (CreateResponse) {}
+}
+
+message CreateRequest {
+	repeated string urls = 1;
+}
+
+message CreateResponse {
+	repeated string urls = 2;
 }
 ```
 
@@ -25,8 +33,8 @@ Your response will return a set of shortened urls in the same order:
 }
 ```
 
+A way to interface with this is by using this [node client](https://github.com/LevInteractive/dwarf-client-javascript).
 
-Better docs coming.
 
 # Development
 
@@ -34,13 +42,16 @@ Better docs coming.
 * Go & dep
 
 
-**Redis Store**
+### Redis Store
+
 Spin up an instance of redis with:
 
 ```bash
 docker run -p "6379:6379" --rm --name dwarf-redis redis:4-alpine
 ```
 
-**Testing**
+### Testing
 
 `go test github.com/LevInteractive/dwarf/ -v`
+
+Note that the tests relies on a running redis instance.
