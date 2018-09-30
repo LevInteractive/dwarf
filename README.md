@@ -34,7 +34,7 @@ message CreateResponse {
 }
 ```
 
-Your response will return a set of shortened urls in the same order:
+Your response will return a set of shortened urls in the same order that they were sent:
 
 ```json
 // -> Request
