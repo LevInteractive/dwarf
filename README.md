@@ -8,7 +8,8 @@ A high-throughput URL shortener microservice built with Go.
 
 ### Usage
 
-See [start-dev.sh](start-dev.sh) for a complete list of available environmental variables.
+See [start-dev.sh](start-dev.sh) for a complete list of available environmental variables. To use
+in a docker container, we have an image [here](https://hub.docker.com/r/levinteractive/dwarf/tags/).
 
 #### GET `/{short-hash}` -> 301 redirection
 
