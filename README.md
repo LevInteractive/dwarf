@@ -1,15 +1,23 @@
-# Dwarf
+# dwarf
 
-A performant URL shortener written in Go using a Redis as a store while exposing
-an interface for others. Uses gRPC for communication for high throughput.
+A high-throughput URL shortener microservice built with Go.
 
-### How it works
+* gRPC for communication
+* Redis store out of the box
+* Fast & simple
 
-**GET** `/{short-hash}`
+### Usage
 
-This will result in a 301 redirect or a 404 not found.
+See [start-dev.sh](start-dev.sh) for a complete list of available environmental variables.
 
-**Creating new shortened URL's via gRPC**
+### GET `/{short-hash}` -> 301 redirection
+
+Dwarf will deliver a 301 redirection to the destination URL or redirect to the fallback
+URL specified with [`NOTFOUND_REDIRECT_URL`](start-dev.sh).
+
+### Creating short links
+
+You must communicate with dwarf via gRPC in order to generate new shortened URLs.
 
 ```proto
 service Dwarf {
@@ -28,12 +36,16 @@ message CreateResponse {
 Your response will return a set of shortened urls in the same order:
 
 ```json
-{
-  "urls": ["http://sh.ort/Mp", "http://sh.ort/uJ"]
-}
+// -> Request
+{ "urls": ["http://long-url.com/1", "http://long-url.com/2"] }
+
+// -> Response
+{ "urls": ["http://sh.ort/Mp", "http://sh.ort/uJ"] }
 ```
 
-A way to interface with this is by using this [node client](https://github.com/LevInteractive/dwarf-client-javascript).
+### A dwarf gRPC client written with node.js
+
+To generate short urls, use a gRPC client such as this [node client](https://github.com/LevInteractive/dwarf-client-javascript).
 
 
 # Development
@@ -54,4 +66,4 @@ docker run -p "6379:6379" --rm --name dwarf-redis redis:4-alpine
 
 `go test github.com/LevInteractive/dwarf/ -v`
 
-Note that the tests relies on a running redis instance.
+Note that the tests rely on a running redis instance.
