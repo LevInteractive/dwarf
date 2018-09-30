@@ -80,13 +80,10 @@ func (s Redis) Load(code string) (string, error) {
 func discover(c *redis.Client, n int) (string, error) {
 	code := GenCode(n)
 	hash := fmt.Sprintf("%s:url:%s", prefix, code)
-	_, err := c.Do("get", hash).String()
+	exists := c.Exists(hash).Val()
 
-	if err == redis.Nil {
+	if exists == 0 {
 		return code, nil
-	} else if err != nil {
-		log.Printf("redis.discover.error: had redis error %v", err)
-		return "", err
 	}
 
 	log.Printf("redis.discover.info: had key collision, incrementing 1 char and looking again")
