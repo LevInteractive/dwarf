@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 
+	"github.com/LevInteractive/dwarf/logger"
 	"github.com/LevInteractive/dwarf/pb"
 	"github.com/LevInteractive/dwarf/storage"
 	"github.com/gorilla/mux"
@@ -30,7 +30,7 @@ func (s *CreateServer) Create(ctx context.Context, req *pb.CreateRequest) (*pb.C
 	for _, u := range req.Urls {
 		_, err := url.ParseRequestURI(u)
 		if err != nil {
-			log.Printf("CreateHandler.error: recieved bad payload: %v", err)
+			logger.Error("CreateHandler.error: recieved bad payload: %v", err)
 			return res, err
 		}
 	}
@@ -39,7 +39,7 @@ func (s *CreateServer) Create(ctx context.Context, req *pb.CreateRequest) (*pb.C
 	for _, u := range req.Urls {
 		code, err := s.Store.Save(u)
 		if err != nil {
-			log.Printf("CreateHandler.error: failed to shorten url: %v", err)
+			logger.Error("CreateHandler.error: failed to shorten url: %v", err)
 			return res, err
 		}
 
@@ -60,13 +60,13 @@ func LookupHandler(store storage.IStorage) func(http.ResponseWriter, *http.Reque
 		fullURL, err := store.Load(code)
 
 		if err == storage.ErrNotFound {
-			log.Printf("LookupHander.warn: could not find url with code %s", code)
+			logger.Error("LookupHander.warn: could not find url with code %s", code)
 			http.Redirect(w, r, NotFoundURL, 301)
 			return
 		}
 
 		if err != nil {
-			log.Printf("LookupHandler.error: receieved error while looking up url: %v", err)
+			logger.Error("LookupHandler.error: receieved error while looking up url: %v", err)
 			http.Redirect(w, r, NotFoundURL, 301)
 			return
 		}

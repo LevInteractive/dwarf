@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/LevInteractive/dwarf/logger"
 	"github.com/go-redis/redis"
 )
 
@@ -40,7 +41,7 @@ func (s Redis) Save(u string) (string, error) {
 	codehash := fmt.Sprintf("%s:code:%s", prefix, u)
 	existingCode, err := s.Client.Get(codehash).Result()
 	if existingCode != "" {
-		log.Printf("redis.Save.info: didn't need to create new - existed: %s with code %s", u, existingCode)
+		logger.Info("redis.Save.info: didn't need to create new - existed: %s with code %s", u, existingCode)
 		return existingCode, nil
 	}
 
@@ -55,7 +56,7 @@ func (s Redis) Save(u string) (string, error) {
 		return "", err
 	}
 
-	log.Printf("redis.Save.info: created new short url for %s / %s", u, code)
+	logger.Info("redis.Save.info: created new short url for %s / %s", u, code)
 	return code, nil
 }
 
@@ -67,11 +68,11 @@ func (s Redis) Load(code string) (string, error) {
 	if err == redis.Nil {
 		return "", ErrNotFound
 	} else if err != nil {
-		log.Printf("redis.Load.error: had redis error %v", err)
+		logger.Error("redis.Load.error: had redis error %v", err)
 		return "", err
 	}
 
-	log.Printf("redis.Load.info: loaded url %s", fullURL)
+	logger.Info("redis.Load.info: loaded url %s", fullURL)
 
 	return fullURL, nil
 }
@@ -86,7 +87,7 @@ func discover(c *redis.Client, n int) (string, error) {
 		return code, nil
 	}
 
-	log.Printf("redis.discover.info: had key collision, incrementing 1 char and looking again")
+	logger.Info("redis.discover.info: had key collision, incrementing 1 char and looking again")
 	return discover(c, n+1)
 }
 
@@ -98,7 +99,7 @@ func set(c *redis.Client, fullURL string, code string) error {
 		return err
 	}
 	if err := c.Set(urlhash, fullURL, 0).Err(); err != nil {
-		log.Printf("redis.set.error: hit error with setting url hash. rolling back previous codehash. %v", err)
+		logger.Error("redis.set.error: hit error with setting url hash. rolling back previous codehash. %v", err)
 		c.Del(codehash)
 		return err
 	}

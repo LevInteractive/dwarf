@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/LevInteractive/dwarf/logger"
 	"github.com/LevInteractive/dwarf/pb"
 	"github.com/LevInteractive/dwarf/storage"
 	"github.com/go-redis/redis"
@@ -75,7 +76,7 @@ func setupGrpcDiscovery(store storage.IStorage) {
 		Store: store,
 	})
 
-	log.Printf(
+	logger.Info(
 		"Dwarf's gRPC server is listening here -> %s",
 		GetEnv("GRPC_PORT", ":8001"),
 	)
@@ -91,7 +92,7 @@ func setupHTTPDiscovery(store storage.IStorage) {
 	r := mux.NewRouter()
 	r.HandleFunc("/{hash:.*}", LookupHandler(store)).Methods("GET")
 	http.Handle("/", r)
-	log.Printf(
+	logger.Info(
 		"Dwarf's public HTTP server is listening here -> %s and exposed here -> %s",
 		appPort,
 		BaseURL,
