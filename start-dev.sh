@@ -3,7 +3,7 @@ go build
 
 # Redis Credentials
 export REDIS_DB="0"
-export REDIS_SERVER="localhost:6379"
+export REDIS_SERVER="localhost:32768"
 export REDIS_PASS=""
 
 # Port for the public application to listen.
